@@ -5,7 +5,7 @@
 [Введение аудита](#T4) <br>
 [inmemory кэш](#T5) <br><br>
 
-> Для запуска необходимо настроить файл .properties, указать настройки базу данных. Создать БД texhnotestdb и указать username, password
+> Для запуска необходимо настроить файл .properties, указать настройки базы данных. Создать БД texhnotestdb и указать username, password
 
 ```properties
 spring.datasource.driver-class-name=org.postgresql.Driver
@@ -13,6 +13,7 @@ spring.datasource.username=
 spring.datasource.password=
 spring.datasource.url=jdbc:postgresql://localhost:5432/texhnotestdb\
 ```
+____
 
 <a name="T1"></a>
 
@@ -76,8 +77,7 @@ ___
 
 ### Введение аудита
 
-Введение аудита (действие, параметры запроса, роль, имеет ли доступ, дата-время, пользователь)
-Данные сохраняются в БД, таблица `audit_log`
+Введение аудита (действие, параметры запроса, роль, имеет ли доступ, дата-время, пользователь). Данные сохраняются в БД, таблица `audit_log`
 
 <img src="img/audit.jpg"/>
 
