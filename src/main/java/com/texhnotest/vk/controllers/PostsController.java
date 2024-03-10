@@ -32,8 +32,7 @@ public class PostsController {
 
   @GetMapping("/posts/{id}")
   public ResponseEntity<Post> getPost(@PathVariable Long id) {
-    String url = API_URL + "/posts/" + id;
-    Post post = restTemplate.getForObject(url, Post.class);
+    Post post = postService.getPost(id);
 
     return Optional.ofNullable(post)
             .map(ResponseEntity::ok)
@@ -42,22 +41,18 @@ public class PostsController {
 
   @GetMapping("/posts/{id}/comments")
   public ResponseEntity<List<Comment>> getCommentsByPostId(@PathVariable Long id) {
-    String url = String.format("%s/posts/%d/comments", API_URL, id);
-    Comment[] comments = restTemplate.getForObject(url, Comment[].class);
+    List<Comment> comments = postService.getCommentsByPostId(id);
 
     return Optional.ofNullable(comments)
-            .map(Arrays::asList)
             .map(ResponseEntity::ok)
             .orElse(ResponseEntity.notFound().build());
   }
 
   @GetMapping("/comments")
   public ResponseEntity<List<Comment>> getCommentsByPostIdQueryParam(@RequestParam Long postId) {
-    String url = API_URL + "/comments?postId={postId}";
-    Comment[] comments = restTemplate.getForObject(url, Comment[].class, postId);
+    List<Comment> comments = postService.getCommentsByPostIdQueryParam(postId);
 
     return Optional.ofNullable(comments)
-            .map(Arrays::asList)
             .map(ResponseEntity::ok)
             .orElse(ResponseEntity.notFound().build());
   }
@@ -65,12 +60,7 @@ public class PostsController {
 
   @PostMapping("/posts")
   public ResponseEntity<Post> createPost(@RequestBody Post post) {
-    HttpHeaders headers = new HttpHeaders();
-    headers.setContentType(MediaType.APPLICATION_JSON);
-
-    // Отправляем запрос на сервер для добавления поста
-    HttpEntity<Post> requestEntity = new HttpEntity<>(post, headers);
-    ResponseEntity<Post> responseEntity = restTemplate.postForEntity(API_URL + "/posts", requestEntity, Post.class);
+    ResponseEntity<Post> responseEntity = postService.createPost(post);
 
     return Optional.of(responseEntity)
             .filter(res -> res.getStatusCode() == HttpStatus.CREATED)
@@ -80,16 +70,7 @@ public class PostsController {
 
   @PutMapping("/posts/{id}")
   public ResponseEntity<Post> updatePost(@PathVariable Long id, @RequestBody Post post) {
-    String url = API_URL + "/posts/{id}";
-    Map<String, Long> params = Collections.singletonMap("id", id);
-
-    ResponseEntity<Post> responseEntity = restTemplate.exchange(
-            url,
-            HttpMethod.PUT,
-            new HttpEntity<>(post),
-            Post.class,
-            params
-    );
+    ResponseEntity<Post> responseEntity = postService.updatePost(id, post);
 
     return Optional.ofNullable(responseEntity.getBody())
             .map(ResponseEntity::ok)
@@ -98,10 +79,7 @@ public class PostsController {
 
   @DeleteMapping("/posts/{id}")
   public ResponseEntity<String> deletePost(@PathVariable Long id) {
-    String url = API_URL + "/posts/{id}";
-    Map<String, Long> params = Collections.singletonMap("id", id);
-    restTemplate.delete(url, params);
-
+    postService.deletePost(id);
     return ResponseEntity.ok("Post with Id=\" + id + \" has been successfully deleted");
   }
 

@@ -1,16 +1,15 @@
 package com.texhnotest.vk.services;
 
+import com.texhnotest.vk.models.Comment;
 import com.texhnotest.vk.models.Post;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 public class PostService {
@@ -44,17 +43,15 @@ public class PostService {
     return result;
   }
 
-  public Post getPost (Long id) {
+  public Post getPost(Long id) {
     String cacheKey = "Post_" + id;
     Post cachedPosts = (Post) cacheManager.get(cacheKey).orElse(null);
-
     if (cachedPosts != null) {
       return cachedPosts;
     }
 
     String url = API_URL + "/posts/" + id;
     Post post = restTemplate.getForObject(url, Post.class);
-
     if (post != null) {
       cacheManager.put(cacheKey, post);
     }
@@ -62,6 +59,72 @@ public class PostService {
     return post;
   }
 
+  public List<Comment> getCommentsByPostId(Long id) {
+    String cacheKey = "CommentsByPostId_" + id;
+    List<Comment> cachedComments = (List<Comment>) cacheManager.get(cacheKey).orElse(Collections.emptyList());
+    if (!cachedComments.isEmpty()) {
+      return cachedComments;
+    }
 
+    String url = String.format("%s/posts/%d/comments", API_URL, id);
+    Comment[] comments = restTemplate.getForObject(url, Comment[].class);
 
+    List<Comment> result = Optional.ofNullable(comments)
+            .map(Arrays::asList)
+            .orElse(Collections.emptyList());
+
+    cacheManager.put(cacheKey, result);
+    return result;
+  }
+
+  public List<Comment> getCommentsByPostIdQueryParam(Long postId) {
+    String cacheKey = "CommentsByPostIdQueryParam_" + postId;
+    List<Comment> cachedComments = (List<Comment>) cacheManager.get(cacheKey).orElse(Collections.emptyList());
+    if (!cachedComments.isEmpty()) {
+      return cachedComments;
+    }
+
+    String url = API_URL + "/comments?postId={postId}";
+    Comment[] comments = restTemplate.getForObject(url, Comment[].class, postId);
+
+    List<Comment> result = Optional.ofNullable(comments)
+            .map(Arrays::asList)
+            .orElse(Collections.emptyList());
+
+    cacheManager.put(cacheKey, result);
+    return result;
+  }
+
+  public ResponseEntity<Post> createPost(Post post) {
+    // Очистите кэш для данного запроса
+    cacheManager.evict("allPosts_");
+
+    String url = API_URL + "/posts";
+    return restTemplate.postForEntity(url, post, Post.class);
+  }
+
+  public ResponseEntity<Post> updatePost(Long id, Post post) {
+    // Очистите кэш для данного запроса
+    cacheManager.evict("allPosts_");
+
+    String url = API_URL + "/posts/{id}";
+    Map<String, Long> params = Collections.singletonMap("id", id);
+
+    return restTemplate.exchange(
+            url,
+            HttpMethod.PUT,
+            new HttpEntity<>(post),
+            Post.class,
+            params
+    );
+  }
+
+  public void deletePost(Long id) {
+    // Очистите кэш для данного запроса
+    cacheManager.evict("allPosts_");
+
+    // Удалите пост на сервере
+    String url = API_URL + "/posts/{id}";
+    restTemplate.delete(url, id);
+  }
 }

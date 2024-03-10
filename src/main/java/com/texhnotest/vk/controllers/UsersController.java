@@ -1,103 +1,91 @@
 package com.texhnotest.vk.controllers;
 
 import com.texhnotest.vk.models.*;
+import com.texhnotest.vk.services.UsersService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.client.RestTemplate;
 
 import java.util.*;
 
 @RestController
 @RequestMapping("/api")
 public class UsersController {
-  private final String API_URL = "https://jsonplaceholder.typicode.com";
-  private final RestTemplate restTemplate;
+
+  private final UsersService userService;
 
   @Autowired
-  public UsersController(RestTemplate restTemplate) {
-    this.restTemplate = restTemplate;
+  public UsersController(UsersService userService) {
+    this.userService = userService;
   }
 
   @GetMapping("/users")
   public ResponseEntity<List<User>> getAll() {
-    String url = API_URL + "/users";
-    List<User> users = Arrays.asList(Objects.requireNonNull(restTemplate.getForObject(url, User[].class)));
-    return ResponseEntity.ok(users);   // Возвращаем результат клиенту
+    List<User> users = userService.getAllUsers();
+
+    return Optional.ofNullable(users)
+            .map(ResponseEntity::ok)
+            .orElse(ResponseEntity.notFound().build()); // Возвращаем результат клиенту
   }
 
   @GetMapping("/users/{id}")
   public ResponseEntity<User> getUser(@PathVariable Long id) {
-    String url = API_URL + "/users/" + id;
-    User user = restTemplate.getForObject(url, User.class);
-    return ResponseEntity.ok(user);
+    User user = userService.getUser(id);
+
+    return Optional.ofNullable(user)
+            .map(ResponseEntity::ok)
+            .orElse(ResponseEntity.notFound().build());
   }
 
   @GetMapping("/users/{id}/posts")
   public ResponseEntity<List<Post>> getPostsByUserId(@PathVariable("id") Long userId) {
-    String url = API_URL + "/posts?userId={id}";
-    List<Post> posts = List.of(
-            Objects.requireNonNull(restTemplate.getForObject(url, Post[].class, userId))
-    );
-    return ResponseEntity.ok(posts);
+    List<Post> posts = userService.getPostsByUserId(userId);
+
+    return Optional.ofNullable(posts)
+            .map(ResponseEntity::ok)
+            .orElse(ResponseEntity.notFound().build());
   }
 
   @GetMapping("/users/{id}/todos")
   public ResponseEntity<List<Todos>> getTodosByUserId(@PathVariable("id") Long userId) {
-    String url = String.format("%s/users/%d/todos", API_URL, userId);
-    List<Todos> todos = List.of(
-            Objects.requireNonNull(restTemplate.getForObject(url, Todos[].class))
-    );
-    return ResponseEntity.ok(todos);
+    List<Todos> todos = userService.getTodosByUserId(userId);
+
+    return Optional.ofNullable(todos)
+            .map(ResponseEntity::ok)
+            .orElse(ResponseEntity.notFound().build());
   }
 
   @GetMapping("/users/{id}/albums")
   public ResponseEntity<List<Album>> getAlbumsByUserId(@PathVariable("id") Long userId) {
-    String url = String.format("%s/users/%d/albums", API_URL, userId);
-    List<Album> albums = List.of(
-            Objects.requireNonNull(restTemplate.getForObject(url, Album[].class))
-    );
-    return ResponseEntity.ok(albums);
+    List<Album> albums = userService.getAlbumsByUserId(userId);
+
+    return Optional.ofNullable(albums)
+            .map(ResponseEntity::ok)
+            .orElse(ResponseEntity.notFound().build());
   }
 
   @PostMapping("/users")
   public ResponseEntity<User> createUser(@RequestBody User user) {
-    HttpHeaders headers = new HttpHeaders();
-    headers.setContentType(MediaType.APPLICATION_JSON);
+    ResponseEntity<User> responseEntity = userService.createUser(user);
 
-    // Отправляем запрос на сервер для добавления поста
-    HttpEntity<User> requestEntity = new HttpEntity<>(user, headers);
-    ResponseEntity<User> responseEntity = restTemplate.postForEntity(API_URL + "/users", requestEntity, User.class);
-
-    if (responseEntity.getStatusCode() == HttpStatus.CREATED) {
-      return ResponseEntity.ok(responseEntity.getBody());
-    } else {
-      return ResponseEntity.status(responseEntity.getStatusCode()).build();
-    }
+    return Optional.of(responseEntity)
+            .filter(res -> res.getStatusCode() == HttpStatus.CREATED)
+            .map(res -> ResponseEntity.ok(res.getBody()))
+            .orElse(ResponseEntity.status(responseEntity.getStatusCode()).build());
   }
 
   @PutMapping("/users/{id}")
   public ResponseEntity<User> updateUser(@PathVariable Long id, @RequestBody User user) {
-    String url = API_URL + "/users/{id}";
-    Map<String, Long> params = new HashMap<>();
-    params.put("id", id);
+    ResponseEntity<User> responseEntity = userService.updateUser(id, user);
 
-    ResponseEntity<User> responseEntity = restTemplate.exchange(
-            url,
-            HttpMethod.PUT,
-            new HttpEntity<>(user),
-            User.class,
-            params
-    );
-    return ResponseEntity.ok(responseEntity.getBody());
+    return Optional.ofNullable(responseEntity.getBody())
+            .map(ResponseEntity::ok)
+            .orElse(ResponseEntity.notFound().build());
   }
 
   @DeleteMapping("/users/{id}")
-  public ResponseEntity<String> deletePost(@PathVariable Long id) {
-    String url = API_URL + "/users/{id}";
-    Map<String, Long> params = new HashMap<>();
-    params.put("id", id);
-    restTemplate.delete(url, params);
+  public ResponseEntity<String> updateUser(@PathVariable Long id) {
+    userService.deleteUser(id);
     return ResponseEntity.ok("User with Id=" + id + " has been successfully deleted");
   }
 
