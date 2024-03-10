@@ -1,15 +1,10 @@
 package com.texhnotest.vk.security.controllers;
 
-import com.texhnotest.vk.security.models.Role;
 import com.texhnotest.vk.security.models.User;
-import com.texhnotest.vk.security.services.RoleService;
 import com.texhnotest.vk.security.services.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.HashSet;
-import java.util.Set;
 
 @RestController
 @RequestMapping("/api")

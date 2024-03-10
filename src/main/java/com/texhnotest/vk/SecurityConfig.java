@@ -31,6 +31,7 @@ public class SecurityConfig {
                     .anyRequest().authenticated())
             .authenticationProvider(authenticationProvider())
             .formLogin(Customizer.withDefaults())
+            .exceptionHandling(Customizer.withDefaults())
             .httpBasic(Customizer.withDefaults())
             .build();
 
