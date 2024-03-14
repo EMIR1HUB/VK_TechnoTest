@@ -11,7 +11,7 @@
 spring.datasource.driver-class-name=org.postgresql.Driver
 spring.datasource.username=
 spring.datasource.password=
-spring.datasource.url=jdbc:postgresql://localhost:5432/texhnotestdb\
+spring.datasource.url=jdbc:postgresql://localhost:5432/texhnotestdb
 ```
 ____
 
